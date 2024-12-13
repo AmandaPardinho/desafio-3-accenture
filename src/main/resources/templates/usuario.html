@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Cadastro</title>
+    <style>
+        .hidden {
+            display: none;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Cadastro de Usuário</h1>
+    <form th:action="@{/api/address}" th:object="${address}" method="post">
+        <h2>Endereço</h2>
+        <label for="cep">CEP:</label>
+        <input type="text" id="cep" name="cep" th:value="*{cep}" required onblur="fetchAddressByCep()">
+        <br>
+        <label for="logradouro">Logradouro:</label>
+        <input type="text" id="logradouro" name="logradouro" th:value="*{logradouro}" required>
+        <br>
+        <label for="localidade">Localidade:</label>
+        <input type="text" id="localidade" name="localidade" th:value="*{localidade}" required>
+        <br>
+        <label for="uf">UF:</label>
+        <input type="text" id="uf" name="uf" th:value="*{uf}" required>
+        <br>
+        <button type="submit" id="saveButton">Salvar Endereço</button>
+        <button type="button" id="editButton" class="hidden" onclick="editAddress()">Editar Endereço</button>
+        <button type="button" id="deleteButton" class="hidden" onclick="deleteAddress()">Excluir Endereço</button>
+        <br><br>
+        <h2>Usuário</h2>
+        <label for="userId">ID do Usuário:</label>
+        <input type="text" id="userId" name="userId" required>
+        <br>
+        <label for="userName">Nome:</label>
+        <input type="text" id="userName" name="userName" required>
+        <br>
+        <label for="userEmail">Email:</label>
+        <input type="text" id="userEmail" name="userEmail" required>
+        <br>
+        <button type="button" id="saveUserButton" onclick="saveUser()">Salvar Usuário</button>
+        <button type="button" id="fetchUserButton" onclick="fetchUser()">Buscar Usuário</button>
+        <button type="button" id="editUserButton" class="hidden" onclick="editUser()">Editar Usuário</button>
+        <button type="button" id="deleteUserButton" class="hidden" onclick="deleteUser()">Excluir Usuário</button>
+    </form>
+
+    <script>
+        $(document).ready(function() {
+            var address = /*[[${address}]]*/ {};
+            if (address && address.cep) {
+                $('#editButton').removeClass('hidden');
+                $('#deleteButton').removeClass('hidden');
+            }
+        });
+
+        function fetchAddressByCep() {
+            var cep = $('#cep').val();
+            if (cep) {
+                $.ajax({
+                    url: '/api/cep/' + cep,
+                    type: 'GET',
+                    success: function(address) {
+                        $('#logradouro').val(address.logradouro);
+                        $('#localidade').val(address.localidade);
+                        $('#uf').val(address.uf);
+                    },
+                    error: function(error) {
+                        alert('Erro ao buscar endereço: ' + error.responseText);
+                    }
+                });
+            }
+        }
+
+        function editAddress() {
+            var cep = $('#cep').val();
+            var addressDetails = {
+                logradouro: $('#logradouro').val(),
+                localidade: $('#localidade').val(),
+                uf: $('#uf').val()
+            };
+            $.ajax({
+                url: '/api/address/update/' + cep,
+                type: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify(addressDetails),
+                success: function(result) {
+                    alert('Endereço atualizado com sucesso!');
+                },
+                error: function(error) {
+                    alert('Erro ao atualizar endereço: ' + error.responseText);
+                }
+            });
+        }
+
+        function deleteAddress() {
+            var cep = $('#cep').val();
+            $.ajax({
+                url: '/api/address/delete/' + cep,
+                type: 'DELETE',
+                success: function(result) {
+                    alert('Endereço excluído com sucesso!');
+                    $('#cep').val('');
+                    $('#logradouro').val('');
+                    $('#localidade').val('');
+                    $('#uf').val('');
+                    $('#editButton').addClass('hidden');
+                    $('#deleteButton').addClass('hidden');
+                },
+                error: function(error) {
+                    alert('Erro ao excluir endereço: ' + error.responseText);
+                }
+            });
+        }
+
+        function fetchUser() {
+            var userId = $('#userId').val();
+            $.ajax({
+                url: '/api/usuario/' + userId,
+                type: 'GET',
+                success: function(user) {
+                    $('#userName').val(user.nome);
+                    $('#userEmail').val(user.email);
+                    $('#editUserButton').removeClass('hidden');
+                    $('#deleteUserButton').removeClass('hidden');
+                },
+                error: function(error) {
+                    alert('Erro ao buscar usuário: ' + error.responseText);
+                }
+            });
+        }
+
+        function saveUser() {
+            var user = {
+                id: $('#userId').val(),
+                nome: $('#userName').val(),
+                email: $('#userEmail').val()
+            };
+            $.ajax({
+                url: '/api/usuario/insert',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(user),
+                success: function(result) {
+                    alert('Usuário salvo com sucesso!');
+                },
+                error: function(error) {
+                    alert('Erro ao salvar usuário: ' + error.responseText);
+                }
+            });
+        }
+
+        function editUser() {
+            var userId = $('#userId').val();
+            var userDetails = {
+                nome: $('#userName').val(),
+                email: $('#userEmail').val()
+            };
+            $.ajax({
+                url: '/api/usuario/update',
+                type: 'PATCH',
+                contentType: 'application/json',
+                data: JSON.stringify(userDetails),
+                success: function(result) {
+                    alert('Usuário atualizado com sucesso!');
+                },
+                error: function(error) {
+                    alert('Erro ao atualizar usuário: ' + error.responseText);
+                }
+            });
+        }
+
+        function deleteUser() {
+            var userId = $('#userId').val();
+            $.ajax({
+                url: '/api/usuario/delete/' + userId,
+                type: 'DELETE',
+                success: function(result) {
+                    alert('Usuário excluído com sucesso!');
+                    $('#userId').val('');
+                    $('#userName').val('');
+                    $('#userEmail').val('');
+                    $('#editUserButton').addClass('hidden');
+                    $('#deleteUserButton').addClass('hidden');
+                },
+                error: function(error) {
+                    alert('Erro ao excluir usuário: ' + error.responseText);
+                }
+            });
+        }
+    </script>
+</body>
+</html>
